@@ -991,3 +991,10 @@ Where host is the name of extractor (eg. instagram, Twitch). Multiple accounts o
 
 </details>
 
+----
+## Commit 27-12-2024
+
+### Fix: Reverted zip handling to 7z and resolved megasdk dependency
+
+- **Reverted** the use of `zip` with `7z` for compatibility.
+- **Fixed** issues with the `megasdk` dependency by using the compiled library whl file.
