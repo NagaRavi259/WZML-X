@@ -13,7 +13,7 @@ from aioshutil import move
 from asyncio import create_subprocess_exec, sleep, Event
 from pyrogram.enums import ChatType
 
-from bot import OWNER_ID, Interval, aria2, DOWNLOAD_DIR, download_dict, download_dict_lock, LOGGER, bot_name, DATABASE_URL, \
+from bot import OWNER_ID, Interval, aria2, DOWNLOAD_DIR, TV_SHOWS_DIR, MOVIES_DIR, OTHERS_DIR, download_dict, download_dict_lock, LOGGER, bot_name, DATABASE_URL, \
     MAX_SPLIT_SIZE, config_dict, status_reply_dict_lock, user_data, non_queued_up, non_queued_dl, queued_up, \
     queued_dl, queue_dict_lock, bot, GLOBAL_EXTENSION_FILTER
 from bot.helper.ext_utils.bot_utils import extra_btns, sync_to_async, get_readable_file_size, get_readable_time, is_mega_link, is_gdrive_link
@@ -42,7 +42,7 @@ from bot.helper.themes import BotTheme
 
 class MirrorLeechListener:
     def __init__(self, message, compress=False, extract=False, isQbit=False, isLeech=False, tag=None, select=False, seed=False, sameDir=None, rcFlags=None, upPath=None, isClone=False, 
-                join=False, drive_id=None, index_link=None, isYtdlp=False, source_url=None, logMessage=None, leech_utils={}):
+                join=False, drive_id=None, index_link=None, isYtdlp=False, source_url=None, logMessage=None, leech_utils={}, keep_file=False):
         if sameDir is None:
             sameDir = {}
         self.message = message
@@ -61,6 +61,7 @@ class MirrorLeechListener:
         self.newDir = ""
         self.dir = f"{DOWNLOAD_DIR}{self.uid}"
         self.select = select
+        self.keep_file = keep_file
         self.isSuperGroup = message.chat.type in [ChatType.SUPERGROUP, ChatType.CHANNEL]
         self.isPrivate = message.chat.type == ChatType.BOT
         self.user_id = self.message.from_user.id
@@ -326,7 +327,7 @@ class MirrorLeechListener:
                     for file_ in files:
                         f_path = ospath.join(dirpath, file_)
                         f_size = await aiopath.getsize(f_path)
-                        if f_size > LEECH_SPLIT_SIZE:
+                        if f_size > LEECH_SPLIT_SIZE and not self.keep_file:
                             if not checked:
                                 checked = True
                                 async with download_dict_lock:
@@ -351,25 +352,54 @@ class MirrorLeechListener:
                             else:
                                 m_size.append(f_size)
                                 o_files.append(file_)
+                        else:
+                            if file_.endswith('aria2'):
+                                LOGGER.info(f"Skipping the aria file")
+                                continue
+                            if self.keep_file == 'movies':
+                                LOGGER.info(f"Skipping the Split and Moving the file to Movies directory")
+                                dest_path = ospath.join(MOVIES_DIR, file_)
+                            elif self.keep_file == 'tvshows':
+                                LOGGER.info(f"Skipping the Split and Moving the file to TV Shows directory")
+                                dest_path = ospath.join(TV_SHOWS_DIR, file_)
+                            else:
+                                LOGGER.info(f"Skipping the Split and Moving the file to Other ideos directory")
+                                dest_path = ospath.join(OTHERS_DIR, file_)
+                            try:
+                                # Move the file from source to destination
+                                await move(f_path, dest_path)
+                                LOGGER.info(f"File successfully moved from '{f_path}' to '{dest_path}'.")
+                            except FileNotFoundError:
+                                LOGGER.error(f"Source file '{f_path}' does not exist.")
+                            except Exception as e:
+                                LOGGER.exception(f"An unexpected error occurred while moving the file: {e}")
 
         up_limit = config_dict['QUEUE_UPLOAD']
+        LOGGER.debug(f"Upload limit set to: {up_limit}")
         all_limit = config_dict['QUEUE_ALL']
+        LOGGER.debug(f"All limit set to: {all_limit}")
         added_to_queue = False
         async with queue_dict_lock:
             dl = len(non_queued_dl)
+            LOGGER.debug(f"Number of non-queued downloads: {dl}")
             up = len(non_queued_up)
+            LOGGER.debug(f"Number of non-queued uploads: {up}")
             if (all_limit and dl + up >= all_limit and (not up_limit or up >= up_limit)) or (up_limit and up >= up_limit):
                 added_to_queue = True
                 LOGGER.info(f"Added to Queue/Upload: {name}")
                 event = Event()
+                LOGGER.debug(f"Event created for UID {self.uid} and added to queued uploads.")
                 queued_up[self.uid] = event
         if added_to_queue:
             async with download_dict_lock:
                 download_dict[self.uid] = QueueStatus(
                     name, size, gid, self, 'Up')
+                LOGGER.info(f"Download status updated for UID {self.uid}: {download_dict[self.uid]}")
             await event.wait()
+            LOGGER.debug(f"Waiting for event to complete for UID {self.uid}.")
             async with download_dict_lock:
                 if self.uid not in download_dict:
+                    LOGGER.warning(f"UID {self.uid} not found in download dictionary after waiting.")
                     return
             LOGGER.info(f'Start from Queued/Upload: {name}')
         async with queue_dict_lock:

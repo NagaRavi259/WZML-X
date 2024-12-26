@@ -998,3 +998,14 @@ Where host is the name of extractor (eg. instagram, Twitch). Multiple accounts o
 
 - **Reverted** the use of `zip` with `7z` for compatibility.
 - **Fixed** issues with the `megasdk` dependency by using the compiled library whl file.
+
+# Commit: Refactor WZML to Focus on Plex Downloads
+**Date:** 2024-12-27
+
+## Changes
+- Removed upload functionality to Telegram, Drive, and other sources.
+- Enhanced download handling to automatically move media to the Plex folder.
+- Simplified workflow for seamless Plex integration, eliminating manual steps.
+
+## Purpose
+This update optimizes the bot for personal Plex usage and ensures easier media management across devices.

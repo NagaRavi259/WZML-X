@@ -108,6 +108,11 @@ debrid_link_sites = ["1dl.net", "1fichier.com", "alterupload.com", "cjoint.net",
 
 
 def direct_link_generator(link):
+    ## handling the keep extension
+    if "-k" in link:
+        link = link.strip(" -k")
+    if "-keep" in link:
+        link = link.strip(" -keep")
     auth = None
     if isinstance(link, tuple):
         link, auth = link

@@ -11,7 +11,7 @@ from dotenv import load_dotenv, dotenv_values
 from threading import Thread
 from time import sleep, time
 from subprocess import Popen, run as srun
-from os import remove as osremove, path as ospath, environ, getcwd
+from os import remove as osremove, path as ospath, environ, getcwd, makedirs
 from aria2p import API as ariaAPI, Client as ariaClient
 from qbittorrentapi import Client as qbClient
 from socket import setdefaulttimeout
@@ -171,6 +171,30 @@ if len(DOWNLOAD_DIR) == 0:
     DOWNLOAD_DIR = '/usr/src/app/downloads/'
 elif not DOWNLOAD_DIR.endswith("/"):
     DOWNLOAD_DIR = f'{DOWNLOAD_DIR}/'
+
+def get_directory(env_var, default_relative_path):
+    """
+    Retrieve a directory path from an environment variable. If not set, use a default relative path.
+    Ensure the directory exists by creating it if necessary.
+    """
+    # Get the directory from the environment variable or use the default path
+    directory = environ.get(env_var)
+    if not directory:
+        directory = ospath.join(getcwd(), default_relative_path)
+    else:
+        # If a relative path is given, convert it to an absolute path
+        if not ospath.isabs(directory):
+            directory = ospath.abspath(directory)
+    # Ensure the directory exists
+    makedirs(directory, exist_ok=True)
+    return directory
+
+MOVIES_DIR = get_directory("MOVIES_DIR", "plex/movies")
+TV_SHOWS_DIR = get_directory("TV_SHOWS_DIR", "plex/tvshows")
+OTHERS_DIR = get_directory("OTHERS_DIR", "plex/others")
+
+# Update MOVIES_DIR and TV_SHOWS_DIR environment variables
+LOGGER.info(f"Directories are set up: \n\tMovies Path - {MOVIES_DIR}\n\tTV Shows Path - {TV_SHOWS_DIR}\n\tOthers Path - {OTHERS_DIR}")
 
 AUTHORIZED_CHATS = environ.get('AUTHORIZED_CHATS', '')
 if AUTHORIZED_CHATS:
@@ -615,6 +639,9 @@ config_dict = {'ANIME_TEMPLATE': ANIME_TEMPLATE,
                'DELETE_LINKS': DELETE_LINKS,
                'DEFAULT_UPLOAD': DEFAULT_UPLOAD,
                'DOWNLOAD_DIR': DOWNLOAD_DIR,
+               'MOVIES_DIR': MOVIES_DIR,
+               'TV_SHOWS_DIR': TV_SHOWS_DIR,
+               'OTHERS_DIR': OTHERS_DIR,
                'STORAGE_THRESHOLD': STORAGE_THRESHOLD,
                'TORRENT_LIMIT': TORRENT_LIMIT,
                'DIRECT_LIMIT': DIRECT_LIMIT,

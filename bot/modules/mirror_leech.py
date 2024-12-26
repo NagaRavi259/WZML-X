@@ -43,6 +43,7 @@ async def _mirror_leech(client, message, isQbit=False, isLeech=False, sameDir=No
                 '-d': False, '-seed': False,
                 '-j': False, '-join': False,
                 '-s': False, '-select': False,
+                '-k': None, '-keep': None,
                 '-b': False, '-bulk': False,
                 '-n': '', '-name': '',
                 '-e': False, '-extract': False,
@@ -71,6 +72,7 @@ async def _mirror_leech(client, message, isQbit=False, isLeech=False, sameDir=No
     seed          = args['-d'] or args['-seed']
     join          = args['-j'] or args['-join']
     select        = args['-s'] or args['-select']
+    keep          = args['-k'] or args['-keep']
     isBulk        = args['-b'] or args['-bulk']
     name          = args['-n'] or args['-name']
     extract       = args['-e'] or args['-extract'] or args['-uz'] or args['-unzip'] or 'uz' in cmd or 'unzip' in cmd
@@ -335,7 +337,7 @@ async def _mirror_leech(client, message, isQbit=False, isLeech=False, sameDir=No
 
     listener = MirrorLeechListener(message, compress, extract, isQbit, isLeech, tag, select, seed, 
                                     sameDir, rcf, up, join, drive_id=drive_id, index_link=index_link, 
-                                    source_url=org_link or link, leech_utils={'screenshots': sshots, 'thumb': thumb})
+                                    source_url=org_link or link, leech_utils={'screenshots': sshots, 'thumb': thumb}, keep_file=keep)
 
     if file_ is not None:
         await delete_links(message)

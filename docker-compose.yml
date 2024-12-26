@@ -35,3 +35,25 @@ services:
     ports:
       - "80:80"
       - "8080:8080"
+      - "6800:6800"
+    environment:
+      MONGO_URI: mongodb://mongodb:27017/
+    depends_on:
+      - mongodb
+    volumes:
+      - .:/usr/src/app  # Bind mount current directory to /usr/src/app in the container
+      - D:/Plex/Movies:/usr/src/movies  # Bind D:/Plex/Movies to /usr/src/movies in the container
+      - D:/Plex/TV Shows:/usr/src/tvshows  # Bind D:/Plex/TV Shows to /usr/src/tvshows in the container
+      - D:/Plex/Other Videos:/usr/src/others  # Bind D:/Plex/Other Videos to /usr/src/others in the container
+
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    
+volumes:
+  mongo_data:
