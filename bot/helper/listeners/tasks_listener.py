@@ -13,7 +13,7 @@ from aioshutil import move
 from asyncio import create_subprocess_exec, sleep, Event
 from pyrogram.enums import ChatType
 
-from bot import OWNER_ID, Interval, aria2, DOWNLOAD_DIR, TV_SHOWS_DIR, MOVIES_DIR, OTHERS_DIR, download_dict, download_dict_lock, LOGGER, bot_name, DATABASE_URL, \
+from bot import OWNER_ID, Interval, aria2, DOWNLOAD_DIR, TV_SHOWS_DIR, MOVIES_DIR, OTHERS_DIR, RAW_DOWNLOADS, download_dict, download_dict_lock, LOGGER, bot_name, DATABASE_URL, \
     MAX_SPLIT_SIZE, config_dict, status_reply_dict_lock, user_data, non_queued_up, non_queued_dl, queued_up, \
     queued_dl, queue_dict_lock, bot, GLOBAL_EXTENSION_FILTER
 from bot.helper.ext_utils.bot_utils import extra_btns, sync_to_async, get_readable_file_size, get_readable_time, is_mega_link, is_gdrive_link
@@ -362,6 +362,9 @@ class MirrorLeechListener:
                             elif self.keep_file == 'tvshows':
                                 LOGGER.info(f"Skipping the Split and Moving the file to TV Shows directory")
                                 dest_path = ospath.join(TV_SHOWS_DIR, file_)
+                            elif self.keep_file == 'raw':
+                                LOGGER.info(f"Skipping the Split and Moving the file to TV Shows directory")
+                                dest_path = ospath.join(RAW_DOWNLOADS, file_)
                             else:
                                 LOGGER.info(f"Skipping the Split and Moving the file to Other ideos directory")
                                 dest_path = ospath.join(OTHERS_DIR, file_)

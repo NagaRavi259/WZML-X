@@ -192,9 +192,10 @@ def get_directory(env_var, default_relative_path):
 MOVIES_DIR = get_directory("MOVIES_DIR", "plex/movies")
 TV_SHOWS_DIR = get_directory("TV_SHOWS_DIR", "plex/tvshows")
 OTHERS_DIR = get_directory("OTHERS_DIR", "plex/others")
+RAW_DOWNLOADS = get_directory("RAW_DOWNLOADS_DIR", "RAW_Downloads")
 
 # Update MOVIES_DIR and TV_SHOWS_DIR environment variables
-LOGGER.info(f"Directories are set up: \n\tMovies Path - {MOVIES_DIR}\n\tTV Shows Path - {TV_SHOWS_DIR}\n\tOthers Path - {OTHERS_DIR}")
+LOGGER.info(f"Directories are set up: \n\tMovies Path - {MOVIES_DIR}\n\tTV Shows Path - {TV_SHOWS_DIR}\n\tOthers Path - {OTHERS_DIR}\n\tRAW Path - {RAW_DOWNLOADS}")
 
 AUTHORIZED_CHATS = environ.get('AUTHORIZED_CHATS', '')
 if AUTHORIZED_CHATS:
@@ -642,6 +643,7 @@ config_dict = {'ANIME_TEMPLATE': ANIME_TEMPLATE,
                'MOVIES_DIR': MOVIES_DIR,
                'TV_SHOWS_DIR': TV_SHOWS_DIR,
                'OTHERS_DIR': OTHERS_DIR,
+               'RAW_DOWNLOADS': RAW_DOWNLOADS,
                'STORAGE_THRESHOLD': STORAGE_THRESHOLD,
                'TORRENT_LIMIT': TORRENT_LIMIT,
                'DIRECT_LIMIT': DIRECT_LIMIT,

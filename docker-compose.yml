@@ -45,6 +45,7 @@ services:
       - D:/Plex/Movies:/usr/src/movies  # Bind D:/Plex/Movies to /usr/src/movies in the container
       - D:/Plex/TV Shows:/usr/src/tvshows  # Bind D:/Plex/TV Shows to /usr/src/tvshows in the container
       - D:/Plex/Other Videos:/usr/src/others  # Bind D:/Plex/Other Videos to /usr/src/others in the container
+      - C:/Users/vnaga/Downloads:/usr/src/downloads  # Bind D:/Plex/Other Videos to /usr/src/others in the container
 
   mongodb:
     image: mongo:latest
