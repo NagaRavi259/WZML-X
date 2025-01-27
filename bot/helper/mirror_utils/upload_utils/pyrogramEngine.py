@@ -287,7 +287,23 @@ class TgUploader:
             if not self.__is_cancelled:
                 LOGGER.error(f"Failed To Send in User Dump:\n{str(err)}")
 
-    async def upload(self, o_files, m_size, size):
+    async def upload(self, o_files, m_size, size, destpath):
+        """
+        Handles the file upload process.
+
+        Parameters:
+            o_files (list): List of output files to be uploaded.
+            m_size (int): Maximum size for a single part.
+            size (int): Total size of the files.
+            destpath (str): Destination path where the files have been moved.
+
+        Returns:
+            None
+        """
+        if self.__listener.keep_file:
+            success_reason = f"✅ Files have been successfully downloaded! \n┠─── 📁 Moved to: `{destpath}`` \n┠─── 🎉 Task completed successfully!"
+            await self.__listener.onUploadError(success_reason, moved=True)
+            return
         await self.__user_settings()
         res = await self.__msg_to_reply()
         if not res:

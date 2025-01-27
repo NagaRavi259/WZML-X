@@ -327,6 +327,7 @@ class MirrorLeechListener:
                     for file_ in files:
                         f_path = ospath.join(dirpath, file_)
                         f_size = await aiopath.getsize(f_path)
+                        dest_path = None
                         if f_size > LEECH_SPLIT_SIZE and not self.keep_file:
                             if not checked:
                                 checked = True
@@ -365,17 +366,19 @@ class MirrorLeechListener:
                             elif self.keep_file == 'raw':
                                 LOGGER.info(f"Skipping the Split and Moving the file to TV Shows directory")
                                 dest_path = ospath.join(RAW_DOWNLOADS, file_)
-                            else:
+                            elif self.keep_file == 'others':
                                 LOGGER.info(f"Skipping the Split and Moving the file to Other ideos directory")
                                 dest_path = ospath.join(OTHERS_DIR, file_)
-                            try:
-                                # Move the file from source to destination
-                                await move(f_path, dest_path)
-                                LOGGER.info(f"File successfully moved from '{f_path}' to '{dest_path}'.")
-                            except FileNotFoundError:
-                                LOGGER.error(f"Source file '{f_path}' does not exist.")
-                            except Exception as e:
-                                LOGGER.exception(f"An unexpected error occurred while moving the file: {e}")
+
+                            if des_path:
+                                try:
+                                    # Move the file from source to destination
+                                    await move(f_path, dest_path)
+                                    LOGGER.info(f"File successfully moved from '{f_path}' to '{dest_path}'.")
+                                except FileNotFoundError:
+                                    LOGGER.error(f"Source file '{f_path}' does not exist.")
+                                except Exception as e:
+                                    LOGGER.exception(f"An unexpected error occurred while moving the file: {e}")
 
         up_limit = config_dict['QUEUE_UPLOAD']
         LOGGER.debug(f"Upload limit set to: {up_limit}")
@@ -418,7 +421,7 @@ class MirrorLeechListener:
             async with download_dict_lock:
                 download_dict[self.uid] = tg_upload_status
             await update_all_messages()
-            await tg.upload(o_files, m_size, size)
+            await tg.upload(o_files, m_size, size, dest_path)
         elif self.upPath == 'gd':
             size = await get_path_size(up_path)
             LOGGER.info(f"Upload Name: {up_name}")
@@ -683,28 +686,49 @@ class MirrorLeechListener:
         if self.newDir:
             await clean_download(self.newDir)
 
-    async def onUploadError(self, error):
+    async def onUploadError(self, error, moved=None):
+        """
+        Handles error or success notifications for upload tasks.
+
+        Parameters:
+            error (str): The reason for the error or success message.
+            moved (bool, optional): Flag to indicate if the message is a success (True) or an error (None). Defaults to None.
+
+        Returns:
+            None
+        """
+        # Acquire the lock to safely modify the shared download dictionary
         async with download_dict_lock:
+            # Remove the current task from the global dictionary if it exists
             if self.uid in download_dict.keys():
                 del download_dict[self.uid]
+            # Count remaining active tasks
             count = len(download_dict)
-        msg = f'''<i><b>Upload Stopped!</b></i>
-┠ <b>Task for:</b> {self.tag}
+
+        # Construct the final message based on whether it's a success or an error
+        msg = f'''<i><b>{'✅ Download Completed!' if moved else '❌ Upload Stopped!'}</b></i>
+┠ <b>Task for:</b> {self.tag}  # Task identifier for tracking
 ┃
-┠ <b>Due To:</b> {escape(error)}
-┠ <b>Mode:</b> {self.upload_details['mode']}
-┖ <b>Elapsed:</b> {get_readable_time(time() - self.message.date.timestamp())}'''
+┠ <b>{'Details:' if moved else 'Due To:'}</b> {escape(error)}
+┠ <b>Mode:</b> {self.upload_details['mode']}  # Upload mode details (e.g., direct, torrent)
+┖ <b>Elapsed:</b> {get_readable_time(time() - self.message.date.timestamp())}'''  # Time elapsed for the task
+        # Send the constructed message to the user
         await sendMessage(self.message, msg)
+        # Clean up if no tasks are remaining
         if count == 0:
             await self.clean()
         else:
+            # Update task summaries for ongoing tasks
             await update_all_messages()
 
+        # Remove incomplete task records if in a supergroup and notifier is enabled
         if self.isSuperGroup and config_dict['INCOMPLETE_TASK_NOTIFIER'] and DATABASE_URL:
             await DbManger().rm_complete_task(self.message.link)
 
+        # Safely handle task removal from various task queues
         async with queue_dict_lock:
             if self.uid in queued_dl:
+                # Signal task completion
                 queued_dl[self.uid].set()
                 del queued_dl[self.uid]
             if self.uid in queued_up:
@@ -715,8 +739,12 @@ class MirrorLeechListener:
             if self.uid in non_queued_up:
                 non_queued_up.remove(self.uid)
 
+        # Start tasks from the queue, if any
         await start_from_queued()
+        # Delay for cleanup operations
         await sleep(3)
+        # Clean the download directory
         await clean_download(self.dir)
         if self.newDir:
+            # Clean any temporary directories created during processing
             await clean_download(self.newDir)
