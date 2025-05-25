@@ -37,9 +37,14 @@ services:
       - "8080:8080"
       - "6800:6800"
     environment:
-      MONGO_URI: mongodb://mongodb:27017/
-    depends_on:
-      - mongodb
+      # MongoDB connection configuration
+      MONGO_SCHEMA: mongodb+srv                      # Use "mongodb" for local, "mongodb+srv" for MongoDB Atlas
+      MONGO_USERNAME: vnagaravi                      # Your MongoDB username (can contain special characters)
+      MONGO_PASSWORD: Ql76xL:QA3D8                   # Your MongoDB password (can contain special characters)
+      MONGO_HOST: wzml-test.xlkifli.mongodb.net      # Hostname or cluster URL
+      MONGO_PORT: 27017                              # Port (omit or comment out if using mongodb+srv)
+    # depends_on:
+    #   - mongodb
     volumes:
       - .:/usr/src/app  # Bind mount current directory to /usr/src/app in the container
       - D:/Plex/Movies:/usr/src/movies  # Bind D:/Plex/Movies to /usr/src/movies in the container
@@ -47,14 +52,14 @@ services:
       - D:/Plex/Other Videos:/usr/src/others  # Bind D:/Plex/Other Videos to /usr/src/others in the container
       - C:/Users/vnaga/Downloads:/usr/src/downloads  # Bind D:/Plex/Other Videos to /usr/src/others in the container
 
-  mongodb:
-    image: mongo:latest
-    container_name: mongodb
-    restart: always
-    ports:
-      - "27017:27017"
-    volumes:
-      - mongo_data:/data/db
+  # mongodb:
+  #   image: mongo:latest
+  #   container_name: mongodb
+  #   restart: always
+  #   ports:
+  #     - "27017:27017"
+  #   volumes:
+  #     - mongo_data:/data/db
     
 volumes:
   mongo_data:

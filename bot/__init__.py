@@ -17,6 +17,7 @@ from qbittorrentapi import Client as qbClient
 from socket import setdefaulttimeout
 from logging import getLogger, Formatter, FileHandler, StreamHandler, INFO, ERROR, basicConfig, error as log_error, info as log_info, warning as log_warning
 from uvloop import install
+from bot.helper.ext_utils.bot_utils import get_mongo_uri
 
 #from faulthandler import enable as faulthandler_enable
 #faulthandler_enable()
@@ -81,7 +82,7 @@ if len(BOT_TOKEN) == 0:
 
 bot_id = BOT_TOKEN.split(':', 1)[0]
 
-DATABASE_URL = environ.get('DATABASE_URL', '')
+DATABASE_URL = get_mongo_uri()
 if len(DATABASE_URL) == 0:
     DATABASE_URL = ''
 

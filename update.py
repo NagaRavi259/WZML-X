@@ -1,10 +1,11 @@
 from logging import FileHandler, StreamHandler, INFO, basicConfig, error as log_error, info as log_info
-from os import path as ospath, environ, remove
+from os import path as ospath, environ, remove, getenv
 from subprocess import run as srun, call as scall
 from pkg_resources import working_set
 from requests import get as rget
 from dotenv import load_dotenv, dotenv_values
 from pymongo import MongoClient
+from urllib.parse import quote_plus
 
 if ospath.exists('log.txt'):
     with open('log.txt', 'r+') as f:
@@ -34,7 +35,24 @@ if len(BOT_TOKEN) == 0:
 
 bot_id = BOT_TOKEN.split(':', 1)[0]
 
-DATABASE_URL = environ.get('DATABASE_URL', '')
+def get_mongo_uri() -> str:
+    """Builds and returns the MongoDB connection URI from environment variables."""
+    schema = getenv("MONGO_SCHEMA", "mongodb")
+    username = quote_plus(getenv("MONGO_USERNAME", ""))
+    password = quote_plus(getenv("MONGO_PASSWORD", ""))
+    host = getenv("MONGO_HOST", "localhost")
+    port = getenv("MONGO_PORT", "27017")
+    database = getenv("MONGO_DB", "")
+
+    # For MongoDB Atlas (SRV doesn't use ports)
+    if schema == "mongodb+srv":
+        uri = f"{schema}://{username}:{password}@{host}/?retryWrites=true&w=majority"
+    else:
+        uri = f"{schema}://{username}:{password}@{host}:{port}/"
+    print("MongoDB uri",uri)
+    return uri
+
+DATABASE_URL = get_mongo_uri()
 if len(DATABASE_URL) == 0:
     DATABASE_URL = None
 
